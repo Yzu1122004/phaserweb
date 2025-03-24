@@ -41,7 +41,8 @@
         const game = new Phaser.Game(config);
         let platforms,
             player,
-            cursors
+            createCursorKeys
+        let sky = null;
 
         function preload() {
             // 練習先前學過的經驗，將background.png、platform.png、ice-platform.png、dude.png資料匯入
@@ -61,6 +62,15 @@
         function create() {
             // 繪製背景天空
             this.add.sprite(0, 0, "background").setOrigin(0);
+            sky = this.add.tileSprite(
+                config.width / 2,
+                config.height / 2,
+                config.width,
+                config.height,
+                "clouds"
+            );
+            this.add.sprite(0, 1906, "trees").setOrigin(0);
+            sky.setScrollFactor(0);
 
             // 玩家
             player = this.physics.add
@@ -109,7 +119,40 @@
                 allowGravity: false,
                 velocityX: 100,
             });
-
+            // platforms.create(0, 64, 'ice-platform');
+            // platforms.create(200, 180, 'platform');
+            // platforms.create(400, 296, 'ice-platform');
+            // platforms.create(600, 412, "platform");
+            this.physics.add.collider(player, platforms, setFriction, null, this);
+            
+            let property = { x: 0, y: 64, type: "platform" };
+            // for (let i = 0; i < 19; i++) {
+            //     let platform = platforms
+            //         .create(property.x, property.y, property.type)
+            //         .setVelocityX(100)
+            //         .setOrigin(0, 0)
+            //         .setName("platform" + i);
+            //     
+            //     property.x += 200;
+            //     if (property.x >= 600) {
+            //         property.x = 0;
+            //     }
+            //     property.y += 104;
+            // }
+            for (let i = 0; i < 19; i++) {
+                property.type = i % 2 === 1 ? "platform" : "ice-platform";
+                let platform = platforms
+                    .create(property.x, property.y, property.type)
+                    .setVelocityX(100)
+                    .setOrigin(0, 0)
+                    .setName("platform" + i);
+                if(property.type === "platform") platform.body.setFriction(1);
+                property.x += 200;
+                if (property.x >= 600) {
+                    property.x = 0;
+                }
+                property.y += 104;
+            }
         }
 
         function update() {
@@ -144,6 +187,24 @@
                         emitter.stop(); // 停止粒子特效
                     }
                 });
+            }
+
+            platforms.getChildren().forEach(function (platform) {
+                wrapPlatform(platform);
+            });
+        }
+        function wrapPlatform(platform) {
+            if (platform.body.velocity.x < 0 && platform.x <= -160) {
+                platform.x = 640;
+            }
+            // 平台速度大於0且平台位置超過畫布寬度時重置
+            else if (platform.body.velocity.x > 0 && platform.x >= 640) {
+                platform.x = -160;
+            }
+        }
+        function setFriction(player, platforms) {
+            if (platforms.texture.key === "ice-platform") {
+                player.body.x -= platforms.body.x - platforms.body.prev.x;
             }
         }
     </script>
