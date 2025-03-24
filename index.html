@@ -61,6 +61,7 @@
 
         function create() {
             // 繪製背景天空
+            this.physics.world.setBounds(0, 0, 640, 2000);
             this.add.sprite(0, 0, "background").setOrigin(0);
             sky = this.add.tileSprite(
                 config.width / 2,
@@ -71,13 +72,13 @@
             );
             this.add.sprite(0, 1906, "trees").setOrigin(0);
             sky.setScrollFactor(0);
-
+            
             // 玩家
             player = this.physics.add
-                .sprite(320, 240, "dude")
+                .sprite(320, 1952, "dude")
                 .setCollideWorldBounds(true)
                 .setName("dude");
-
+            player.body.setSize(2, 32).setOffset(6, 16);
             //玩家移動
             this.anims.create({
                 key: "left",
@@ -123,7 +124,6 @@
             // platforms.create(200, 180, 'platform');
             // platforms.create(400, 296, 'ice-platform');
             // platforms.create(600, 412, "platform");
-            this.physics.add.collider(player, platforms, setFriction, null, this);
             
             let property = { x: 0, y: 64, type: "platform" };
             // for (let i = 0; i < 19; i++) {
@@ -152,7 +152,17 @@
                     property.x = 0;
                 }
                 property.y += 104;
+                if(Math.random() >0.5){
+                    platform.body.velocity.x *= -1;
+                }
             }
+
+            this.physics.add.collider(player, platforms, setFriction, null, this);
+            
+            let camera =this.cameras.main;
+            camera
+                .setBounds(0,0,640,2000)
+                .startFollow(player, true, 0, 0.05, 0, 100);
         }
 
         function update() {
