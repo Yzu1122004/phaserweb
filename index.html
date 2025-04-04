@@ -208,7 +208,7 @@
             }
 
             // 增加判斷是否翻轉中
-            if (Phaser.Input.Keyboard.JustDown(cursors.up) && isTouch && !isFlipping) {
+            if (cursors.up.isDown && isTouch && !isFlipping) {
                 isFlipping = true;
                 // 使用粒子特效
                 emitter.start();
