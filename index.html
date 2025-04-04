@@ -29,6 +29,7 @@
                 default: "arcade",
                 arcade: {
                     gravity: { y: 800 },
+                    debug: true,
                 },
             },
             scene: {
@@ -43,7 +44,7 @@
             player,
             createCursorKeys
         let sky = null;
-
+        let isJumping = 0;
         function preload() {
             // 練習先前學過的經驗，將background.png、platform.png、ice-platform.png、dude.png資料匯入
             this.load.image("background", "assets/background.png");
@@ -61,7 +62,7 @@
 
         function create() {
             // 繪製背景天空
-            this.physics.world.setBounds(0, 0, 640, 2000);
+            this.physics.world.setBounds(0, 0, 640, 2700);
             this.add.sprite(0, 0, "background").setOrigin(0);
             sky = this.add.tileSprite(
                 config.width / 2,
@@ -70,15 +71,15 @@
                 config.height,
                 "clouds"
             );
-            this.add.sprite(0, 1906, "trees").setOrigin(0);
+            this.add.sprite(0, 2620, "trees").setOrigin(0);
             sky.setScrollFactor(0);
             
             // 玩家
             player = this.physics.add
-                .sprite(320, 1952, "dude")
+                .sprite(320, 2620, "dude")
                 .setCollideWorldBounds(true)
                 .setName("dude");
-            player.body.setSize(2, 32).setOffset(6, 16);
+            player.body.setSize(20, 32).setOffset(6, 16);
             //玩家移動
             this.anims.create({
                 key: "left",
@@ -139,7 +140,7 @@
             //     }
             //     property.y += 104;
             // }
-            for (let i = 0; i < 19; i++) {
+            for (let i = 25; i > 0; i--) {
                 property.type = i % 2 === 1 ? "platform" : "ice-platform";
                 let platform = platforms
                     .create(property.x, property.y, property.type)
@@ -147,6 +148,16 @@
                     .setOrigin(0, 0)
                     .setName("platform" + i);
                 if(property.type === "platform") platform.body.setFriction(1);
+                // 在平台中間新增數字
+                let text = this.add.text(
+                    property.x + platform.displayWidth / 2, 
+                    property.y + platform.displayHeight / 2,
+                    i , 
+                    { fontSize: "20px", fill: "#fff", fontStyle: "bold" }
+                ).setOrigin(0.5);
+
+                platform.text = text;
+                
                 property.x += 200;
                 if (property.x >= 600) {
                     property.x = 0;
@@ -159,9 +170,18 @@
 
             this.physics.add.collider(player, platforms, setFriction, null, this);
             
+            hudText = this.add.text(
+                config.width - 20,  
+                20,                 
+                "s1122004 蔡裕盛",         
+                { fontSize: "20px", fill: "#fff", fontStyle: "bold" }
+            ).setOrigin(1, 0);
+
+            hudText.setScrollFactor(0);
+
             let camera =this.cameras.main;
             camera
-                .setBounds(0,0,640,2000)
+                .setBounds(0,0,640,2700)
                 .startFollow(player, true, 0, 0.05, 0, 100);
         }
 
@@ -169,6 +189,7 @@
             player.setVelocityX(0);
             let isTouch = player.body.blocked.down || player.body.touching.down;
             let isFlipping = false;
+            
             if (cursors.left.isDown) {
                 player.setVelocityX(-200);
                 player.anims.play("left", true);
@@ -179,10 +200,16 @@
                 player.setVelocityX(0);
                 player.anims.play("turn");
             }
-            // 增加判斷是否翻轉中
-            if (cursors.up.isDown && isTouch && !isFlipping) {
-                isFlipping = true;
+            if (Phaser.Input.Keyboard.JustDown(cursors.up) && isJumping < 2) {
                 player.setVelocityY(-500);
+                isJumping++;
+            }else if (isTouch && isJumping >= 2){
+                isJumping=0;
+            }
+
+            // 增加判斷是否翻轉中
+            if (Phaser.Input.Keyboard.JustDown(cursors.up) && isTouch && !isFlipping) {
+                isFlipping = true;
                 // 使用粒子特效
                 emitter.start();
                 // 使用tweens補間動畫設計翻轉效果
@@ -201,6 +228,10 @@
 
             platforms.getChildren().forEach(function (platform) {
                 wrapPlatform(platform);
+                if (platform.text) {
+                    platform.text.x = platform.x + platform.displayWidth / 2;
+                    platform.text.y = platform.y + platform.displayHeight / 2;
+                }
             });
         }
         function wrapPlatform(platform) {
